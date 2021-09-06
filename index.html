@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Lichess: List closed/banned team members</title>
+    <title>Lichess: List and decline challenges</title>
     <style>
       .spinner {
         visibility: hidden;
@@ -41,6 +41,15 @@
           transform: rotate(1800deg);
         }
       }
+      td:nth-child(3) {
+        text-align: center;
+      }
+      td {
+        padding: 2px 10px;
+      }
+      tr:nth-child(odd) {
+        background: lightgray;
+      }
     </style>
   </head>
   <body>
@@ -51,39 +60,59 @@
     <input id="api-key" /><br />
     <button id="run" type="button">Run</button>
     <h3>Results <span class="spinner"></span></h3>
-    <ul id="challenges"></ul>
+    <table id="challenges" cellspacing="0">
+      <tr>
+        <th>Name</th>
+        <th>Variant</th>
+        <th>Time</th>
+        <th></th>
+      </tr>
+    </table>
     <script>
       async function run() {
         const results = document.getElementById('results');
-        const li = document.getElementById('challenges');
-        const apiKey = document.getElementById('api-key').value?.trim();
+        const table = document.getElementById('challenges');
+        const apiKey = document.getElementById('api-key').value.trim();
         const headers = { Authorization: 'Bearer ' + apiKey };
+
         document.body.classList.add('running');
-        const resp = await fetch("https://lichess.org/api/challenge", {headers});
+
+        const resp = await fetch('https://lichess.org/api/challenge', { headers });
         const challenges = await resp.json();
         for (const chall of challenges.in) {
-          const el = document.createElement("ul");
-          el.innerText = `${chall.challenger?.name ?? "Anonymous"} ${chall.timeControl?.show ?? chall.speed}`;
-          const btn = document.createElement("button");
-          btn.innerText = "Decline";
-          btn.addEventListener("click", () => {
+          const row = document.createElement('tr');
+          row.innerHTML = [
+            chall.challenger?.name ?? 'Anonymous',
+            chall.variant.name,
+            chall.timeControl?.show ?? chall.speed,
+          ]
+            .map((s) => '<td>' + s + '</td>')
+            .join('');
+          const btn = document.createElement('button');
+          btn.innerText = 'Decline';
+          btn.addEventListener('click', () => {
             document.body.classList.add('running');
             fetch(`https://lichess.org/api/challenge/${chall.id}/decline`, {
-              method: "POST",
-              headers
+              method: 'POST',
+              headers,
             });
             document.body.classList.remove('running');
+            row.remove();
           });
-          el.appendChild(btn);
-          li.appendChild(el);
+          const btnTd = document.createElement('td');
+          btnTd.appendChild(btn);
+          row.appendChild(btnTd);
+          table.appendChild(row);
         }
+
         document.body.classList.remove('running');
       }
+
       document.getElementById('run').addEventListener('click', () => run());
-      
+
       const apiKeyEl = document.getElementById('api-key');
-      apiKeyEl.addEventListener("change", () => localStorage.setItem("apiKey", apiKeyEl.value));
-      const key = localStorage.getItem("apiKey");
+      apiKeyEl.addEventListener('change', () => localStorage.setItem('apiKey', apiKeyEl.value));
+      const key = localStorage.getItem('apiKey');
       if (key) apiKeyEl.value = key;
     </script>
   </body>
