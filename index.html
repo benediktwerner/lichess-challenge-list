@@ -80,6 +80,11 @@
         document.body.classList.remove('running');
       }
       document.getElementById('run').addEventListener('click', () => run());
+      
+      const apiKeyEl = document.getElementById('api-key');
+      apiKeyEl.addEventListener("change", () => localStorage.setItem("apiKey", apiKeyEl.value));
+      const key = localStorage.getItem("apiKey");
+      if (key) apiKeyEl.value = key;
     </script>
   </body>
 </html>
